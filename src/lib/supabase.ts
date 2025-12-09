@@ -5,4 +5,4 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-export const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL || '';
+export const EDGE_FUNCTION_URL = `${supabaseUrl}/functions/v1/generate-itinerary`;

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from '../hooks/useNavigate';
 import { useAuth } from '../contexts/AuthContext';
 import { useItinerary } from '../hooks/useItinerary';
-import { N8N_WEBHOOK_URL } from '../lib/supabase';
+import { EDGE_FUNCTION_URL, supabase } from '../lib/supabase';
 import { Itinerary } from '../types';
 import { ArrowLeft } from 'lucide-react';
 
@@ -38,6 +38,9 @@ export function TripInput() {
     setLoading(true);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
       const payload = {
         userId: user?.id,
         workflowType,
@@ -47,14 +50,18 @@ export function TripInput() {
         ...(workflowType === 'plan' && { experiences }),
       };
 
-      const response = await fetch(N8N_WEBHOOK_URL, {
+      const response = await fetch(EDGE_FUNCTION_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate itinerary');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate itinerary');
       }
 
       const itinerary: Itinerary = await response.json();
